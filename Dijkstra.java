@@ -83,9 +83,9 @@ public class Dijkstra {
                 directed = line.charAt(10) == 's';
             } else if (line.startsWith("pode_ir(")) {
                 String[] parts = line.substring(8, line.indexOf(")")).split(",");
-                String from = parts[0];
-                String to = parts[1];
-                int cost = Integer.parseInt(parts[2]);
+                String from = parts[0].trim();
+                String to = parts[1].trim();
+                int cost = Integer.parseInt(parts[2].trim());
 
                 nodes.putIfAbsent(from, new Node(from));
                 nodes.putIfAbsent(to, new Node(to));
@@ -96,13 +96,16 @@ public class Dijkstra {
                 }
             } else if (line.startsWith("h(")) {
                 String[] parts = line.substring(2, line.indexOf(")")).split(",");
-                String node = parts[0];
+                String node = parts[0].trim();
                 // parts[1] é o final, ignorado pois é sempre f0 no exemplo
-                int hValue = Integer.parseInt(parts[2]);
+                int hValue = Integer.parseInt(parts[2].trim());
                 heuristics.put(node, hValue);
             }
         }
         scanner.close();
+
+        // Adicione o nó final se não estiver presente (ex.: f0 pode não ter 'pode_ir')
+        nodes.putIfAbsent(target, new Node(target));
 
         Map<String, Object> result = new HashMap<>();
         result.put("initial", nodes.get(initial));
