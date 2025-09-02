@@ -6,6 +6,12 @@ import java.util.stream.Stream;
 
 public class Dijkstra {
 
+    // Função: calculateShortestPath
+    // Descrição: Calcula o caminho mais curto entre o nó inicial (source) e o nó final (target) usando o algoritmo de Dijkstra.
+    // Entrada: Node source (nó inicial), Node target (nó final), Map<String, Integer> heuristics (mapa de heurísticas, não usado no Dijkstra).
+    // Saída: Nenhuma (imprime o resultado no console).
+    // Pré-Condicao: O grafo deve estar corretamente inicializado, com nós e arestas.
+    // Pós-Condicao: O caminho mais curto e a distância são exibidos no console.
     public static void calculateShortestPath(Node source, Node target, Map<String, Integer> heuristics) {
         source.setDistance(0);
         Set<Node> settledNodes = new HashSet<>();
@@ -52,6 +58,12 @@ public class Dijkstra {
         System.out.println("Medida de desempenho: " + nodesExpanded);
     }
 
+    // Função: evaluateDistanceAndPath
+    // Descrição: Avalia se o caminho passando pelo nó atual é menor que o já registrado no nó adjacente e atualiza se necessário.
+    // Entrada: Node adjacentNode (nó adjacente), Integer edgeWeight (peso da aresta), Node sourceNode (nó de origem).
+    // Saída: Nenhuma (atualiza o nó adjacente se encontrar caminho menor).
+    // Pré-Condicao: Os nós devem estar inicializados e conectados.
+    // Pós-Condicao: O nó adjacente pode ter sua distância e caminho mais curto atualizados.
     private static void evaluateDistanceAndPath(Node adjacentNode, Integer edgeWeight, Node sourceNode) {
         Integer newDistance = sourceNode.getDistance() + edgeWeight;
         if (newDistance < adjacentNode.getDistance()) {
@@ -62,7 +74,12 @@ public class Dijkstra {
         }
     }
 
-    // Método de leitura do arquivo
+    // Função: lerArquivo
+    // Descrição: Lê um arquivo de texto contendo a definição do grafo, inicial, final, orientação e heurísticas.
+    // Entrada: String filename (nome do arquivo).
+    // Saída: Map<String, Object> contendo os nós inicial, final e heurísticas.
+    // Pré-Condicao: O arquivo deve estar no formato esperado.
+    // Pós-Condicao: Retorna um mapa com os dados do grafo prontos para uso.
     public static Map<String, Object> lerArquivo(String filename) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(filename));
         Map<String, Node> nodes = new HashMap<>();
@@ -114,7 +131,13 @@ public class Dijkstra {
         return result;
     }
 
-    public static void main(String[] args) {
+    // Função: main
+    // Descrição: Ponto de entrada do programa, faz a leitura do arquivo e executa o algoritmo de Dijkstra.
+    // Entrada: Nenhum.
+    // Saída: Nenhuma (imprime resultados no console).
+    // Pré-Condicao: O arquivo de entrada deve existir e estar no formato correto.
+    // Pós-Condicao: O resultado do algoritmo é exibido no console.
+    public static void main() {
         try {
             // Leitura do arquivo
             Map<String, Object> graphData = lerArquivo("arquivoEntrada.txt");
