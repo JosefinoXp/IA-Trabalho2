@@ -7,32 +7,52 @@ import java.util.stream.Stream;
 public class Dijkstra {
 
     // Função: calculateShortestPath
-    // Descrição: Calcula o caminho mais curto entre o nó inicial (source) e o nó final (target) usando o algoritmo de Dijkstra.
-    // Entrada: Node source (nó inicial), Node target (nó final), Map<String, Integer> heuristics (mapa de heurísticas, não usado no Dijkstra).
+    // Descrição: Calcula o caminho mais curto entre o nó inicial (source) e o nó final (target) usando o algoritmo de Dijkstra com limite de fio.
+    // Entrada: Node source (nó inicial), Node target (nó final), Map heuristics (mapa de heurísticas, não usado no Dijkstra), int limiteFio (comprimento máximo do fio).
     // Saída: Nenhuma (imprime o resultado no console).
     // Pré-Condicao: O grafo deve estar corretamente inicializado, com nós e arestas.
-    // Pós-Condicao: O caminho mais curto e a distância são exibidos no console.
-    public static void calculateShortestPath(Node source, Node target, Map<String, Integer> heuristics) {
+    // Pós-Condicao: O caminho mais curto e a distância são exibidos no console, considerando o limite de fio.
+    public static void calculateShortestPath(Node source, Node target, Map heuristics, int limiteFio) {
         source.setDistance(0);
-        Set<Node> settledNodes = new HashSet<>();
-        Queue<Node> unsettledNodes = new PriorityQueue<>(Collections.singleton(source));
+        Set settledNodes = new HashSet<>();
+        Queue unsettledNodes = new PriorityQueue<>(Collections.singleton(source));
         int iteration = 1;
         int nodesExpanded = 0; // Medida de desempenho: nós expandidos acumulados
 
         System.out.println("Início da execução");
 
         while (!unsettledNodes.isEmpty()) {
-            // Exibição iterativa
+            Node currentNode = (Node) unsettledNodes.poll();
+
+            // Calcular fio restante para o nó atual
+            int fioRestante = limiteFio - currentNode.getDistance();
+            boolean descartarCaminho = fioRestante <= 0;
+
+            // Exibição iterativa (printar a fila como estava antes do poll)
             System.out.println("\nIteração " + iteration + ":");
-            System.out.print("Lista: ");
-            for (Node node : unsettledNodes) {
-                int h = heuristics.getOrDefault(node.getName(), 0); // Heurística (0 para Dijkstra)
+            System.out.print("Fila: ");
+            unsettledNodes.add(currentNode); // Temporariamente adicionar de volta para printar a fila completa
+            for (Node node : (Queue<Node>) unsettledNodes) {
+                int h = (Integer) heuristics.getOrDefault(node.getName(), 0); // Heurística (0 para Dijkstra)
                 System.out.print("(" + node.getName() + ": " + node.getDistance() + " + " + h + " = " + (node.getDistance() + h) + ") ");
             }
             System.out.println();
-            System.out.println("Medida de desempenho: " + nodesExpanded); // Exemplo: nós expandidos
+            unsettledNodes.remove(currentNode); // Remover após print
 
-            Node currentNode = unsettledNodes.poll();
+            System.out.println("Medida de desempenho: " + nodesExpanded);
+            System.out.print("Fio restante: " + fioRestante);
+            if (descartarCaminho) {
+                System.out.println(" – Caminho descartado");
+            } else {
+                System.out.println();
+            }
+
+            // Se o caminho deve ser descartado (fio insuficiente), não expandir este nó
+            if (descartarCaminho) {
+                iteration++;
+                continue;
+            }
+
             nodesExpanded++; // Incrementa medida
 
             // Se alcançou o target, pode parar (otimização opcional)
@@ -43,8 +63,15 @@ public class Dijkstra {
             currentNode.getAdjacentNodes()
                     .entrySet().stream().filter(entry -> !settledNodes.contains(entry.getKey()))
                     .forEach(entry -> {
-                        evaluateDistanceAndPath(entry.getKey(), entry.getValue(), currentNode);
-                        unsettledNodes.add(entry.getKey());
+                        int newDistance = currentNode.getDistance() + (Integer) entry.getValue();
+                        // Só atualizar se newDistance <= limiteFio
+                        if (newDistance <= limiteFio && newDistance < ((Node) entry.getKey()).getDistance()) {
+                            ((Node) entry.getKey()).setDistance(newDistance);
+                            ((Node) entry.getKey()).setShortestPath(
+                                    Stream.concat(currentNode.getShortestPath().stream(), Stream.of(currentNode)).collect(Collectors.toList())
+                            );
+                            unsettledNodes.add((Node) entry.getKey());
+                        }
                     });
             settledNodes.add(currentNode);
             iteration++;
@@ -58,32 +85,16 @@ public class Dijkstra {
         System.out.println("Medida de desempenho: " + nodesExpanded);
     }
 
-    // Função: evaluateDistanceAndPath
-    // Descrição: Avalia se o caminho passando pelo nó atual é menor que o já registrado no nó adjacente e atualiza se necessário.
-    // Entrada: Node adjacentNode (nó adjacente), Integer edgeWeight (peso da aresta), Node sourceNode (nó de origem).
-    // Saída: Nenhuma (atualiza o nó adjacente se encontrar caminho menor).
-    // Pré-Condicao: Os nós devem estar inicializados e conectados.
-    // Pós-Condicao: O nó adjacente pode ter sua distância e caminho mais curto atualizados.
-    private static void evaluateDistanceAndPath(Node adjacentNode, Integer edgeWeight, Node sourceNode) {
-        Integer newDistance = sourceNode.getDistance() + edgeWeight;
-        if (newDistance < adjacentNode.getDistance()) {
-            adjacentNode.setDistance(newDistance);
-            adjacentNode.setShortestPath(
-                    Stream.concat(sourceNode.getShortestPath().stream(), Stream.of(sourceNode)).collect(Collectors.toList())
-            );
-        }
-    }
-
     // Função: lerArquivo
     // Descrição: Lê um arquivo de texto contendo a definição do grafo, inicial, final, orientação e heurísticas.
     // Entrada: String filename (nome do arquivo).
-    // Saída: Map<String, Object> contendo os nós inicial, final e heurísticas.
+    // Saída: Map contendo os nós inicial, final e heurísticas.
     // Pré-Condicao: O arquivo deve estar no formato esperado.
     // Pós-Condicao: Retorna um mapa com os dados do grafo prontos para uso.
-    public static Map<String, Object> lerArquivo(String filename) throws FileNotFoundException {
+    public static Map lerArquivo(String filename) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(filename));
-        Map<String, Node> nodes = new HashMap<>();
-        Map<String, Integer> heuristics = new HashMap<>();
+        Map nodes = new HashMap<>();
+        Map heuristics = new HashMap<>();
         String initial = null;
         String target = null;
         boolean directed = true; // Default s (orientado)
@@ -107,9 +118,9 @@ public class Dijkstra {
                 nodes.putIfAbsent(from, new Node(from));
                 nodes.putIfAbsent(to, new Node(to));
 
-                nodes.get(from).addAdjacentNode(nodes.get(to), cost);
+                ((Node) nodes.get(from)).addAdjacentNode((Node) nodes.get(to), cost);
                 if (!directed) {
-                    nodes.get(to).addAdjacentNode(nodes.get(from), cost);
+                    ((Node) nodes.get(to)).addAdjacentNode((Node) nodes.get(from), cost);
                 }
             } else if (line.startsWith("h(")) {
                 String[] parts = line.substring(2, line.indexOf(")")).split(",");
@@ -124,7 +135,7 @@ public class Dijkstra {
         // Adicione o nó final se não estiver presente (ex.: f0 pode não ter 'pode_ir')
         nodes.putIfAbsent(target, new Node(target));
 
-        Map<String, Object> result = new HashMap<>();
+        Map result = new HashMap<>();
         result.put("initial", nodes.get(initial));
         result.put("target", nodes.get(target));
         result.put("heuristics", heuristics);
@@ -132,21 +143,27 @@ public class Dijkstra {
     }
 
     // Função: main
-    // Descrição: Ponto de entrada do programa, faz a leitura do arquivo e executa o algoritmo de Dijkstra.
+    // Descrição: Ponto de entrada do programa, faz a leitura do arquivo, pergunta pelo comprimento do fio e executa o algoritmo de Dijkstra com limite.
     // Entrada: Nenhum.
     // Saída: Nenhuma (imprime resultados no console).
     // Pré-Condicao: O arquivo de entrada deve existir e estar no formato correto.
     // Pós-Condicao: O resultado do algoritmo é exibido no console.
-    public static void main() {
+    public static void main(String[] args) {
         try {
             // Leitura do arquivo
-            Map<String, Object> graphData = lerArquivo("arquivoEntrada.txt");
+            Map graphData = lerArquivo("arquivoEntrada.txt");
             Node source = (Node) graphData.get("initial");
             Node target = (Node) graphData.get("target");
-            Map<String, Integer> heuristics = (Map<String, Integer>) graphData.get("heuristics");
+            Map heuristics = (Map) graphData.get("heuristics");
 
-            calculateShortestPath(source, target, heuristics);
+            try (Scanner input = new Scanner(System.in)) {
+                // Pergunta pelo comprimento do fio
+                System.out.println("Qual o comprimento do fio?");
+                int limiteFio = input.nextInt();
 
+                calculateShortestPath(source, target, heuristics, limiteFio);
+            }
+            
         } catch (FileNotFoundException e) {
             System.out.println("Arquivo não encontrado: " + e.getMessage());
         }
