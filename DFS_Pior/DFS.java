@@ -1,48 +1,148 @@
 package DFS_Pior;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.io.File;
+import java.util.*;
+
+import DFS_Pior.Vertex.Edge;
 
 public class DFS {
-    
-    public void traverse(Vertex startVertex) {
-        Deque<Vertex> stack = new LinkedList();
 
-        stack.push(startVertex);
+    private static class PathState {
+        Vertex vertex;
+        int g;
+        PathState parentState;
 
-        while (!stack.isEmpty()) {
-            Vertex current = stack.pop();
+        PathState(Vertex vertex, int g, PathState parentState) {
+            this.vertex = vertex;
+            this.g = g;
+            this.parentState = parentState;
+        }
+    }
 
-            if (!current.isVisited()) {
-                current.setVisited(true);
-                System.out.println("Node(data=" + current.getData() + ", visited=" + current.isVisited() + ")");
+    public void traverse(Vertex start, Vertex goal) {
+        System.out.println("Início da execução");
 
-                Collections.reverse(current.getNeighbors());
+        Set<String> visited = new HashSet<>();
+        Deque<PathState> stack = new LinkedList<>();
+        PathState init = new PathState(start, 0, null);
+        stack.addLast(init);
+        visited.add(start.getName());
 
-                current.getNeighbors().forEach(stack::push);
+        int iteration = 0;
+        boolean found = false;
+        int distance = -1;
+        List<String> path = null;
+        int finalPerformance = 0;
+
+        while (!stack.isEmpty() && !found) {
+            PathState current = stack.removeLast();
+            Vertex v = current.vertex;
+
+            if (v.getName().equals(goal.getName())) {
+                found = true;
+                distance = current.g;
+                path = new ArrayList<>();
+                PathState temp = current;
+                while (temp != null) {
+                    path.add(temp.vertex.getName());
+                    temp = temp.parentState;
+                }
+                Collections.reverse(path);
+                finalPerformance = iteration;
+                continue;
             }
 
+            // Expand
+            List<Edge> neigh = new ArrayList<>(v.getNeighbors());
+            Collections.reverse(neigh);
+            for (Edge edge : neigh) {
+                Vertex child = edge.to;
+                if (!visited.contains(child.getName())) {
+                    visited.add(child.getName());
+                    stack.addLast(new PathState(child, current.g + edge.cost, current));
+                }
+            }
+
+            // Print after expand if stack not empty
+            if (!stack.isEmpty()) {
+                iteration++;
+                System.out.println("Iteração " + iteration + ":");
+
+                System.out.print("Lista: ");
+                List<PathState> currentList = new ArrayList<>(stack);
+                Collections.reverse(currentList); // Top to bottom
+                for (PathState state : currentList) {
+                    int h = state.vertex.getHeuristic();
+                    int soma = state.g + h;
+                    System.out.print("(" + state.vertex.getName() + ": " + state.g + " + " + h + " = " + soma + ") ");
+                }
+                System.out.println();
+
+                // Chosen performance measure: number of iterations (as example, can be adjusted)
+                System.out.println("Medida de desempenho: " + iteration);
+                finalPerformance = iteration;
+            }
+        }
+
+        System.out.println("Fim da execução");
+
+        if (found) {
+            System.out.println("Distância: " + distance);
+            System.out.println("Caminho: " + String.join(" – ", path));
+            System.out.println("Medida de desempenho: " + finalPerformance);
+        } else {
+            System.out.println("Caminho não encontrado.");
         }
     }
 
     public static void main(String[] args) {
-        Vertex v0 = new Vertex(0);
-        Vertex v1 = new Vertex(1);
-        Vertex v2 = new Vertex(2);
-        Vertex v3 = new Vertex(3);
-        Vertex v4 = new Vertex(4);
-        Vertex v5 = new Vertex(5);
-        Vertex v6 = new Vertex(6);
+        try {
+            Scanner scanner = new Scanner(new File("arquivoEntrada.txt"));
+            Map<String, Vertex> nodes = new HashMap<>();
+            String startName = null;
+            String goalName = null;
+            boolean directed = true;
 
-        v0.setNeighbors(Arrays.asList(v1, v5, v6));
-        v1.setNeighbors(Arrays.asList(v3, v4, v5));
-        v4.setNeighbors(Arrays.asList(v2, v6));
-        v6.setNeighbors(Arrays.asList(v0));
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty() || line.startsWith("%")) continue;
+                if (line.endsWith(".")) line = line.substring(0, line.length() - 1);
 
-        DFS codigo = new DFS();
-        codigo.traverse(v0);
-        
+                if (line.startsWith("ponto_inicial(")) {
+                    startName = line.substring(14, line.length() - 1).trim();
+                } else if (line.startsWith("ponto_final(")) {
+                    goalName = line.substring(12, line.length() - 1).trim();
+                } else if (line.startsWith("orientado(")) {
+                    String val = line.substring(10, line.length() - 1).trim();
+                    directed = val.equals("s");
+                } else if (line.startsWith("pode_ir(")) {
+                    String[] parts = line.substring(8, line.length() - 1).split(",");
+                    String from = parts[0].trim();
+                    String to = parts[1].trim();
+                    int cost = Integer.parseInt(parts[2].trim());
+                    nodes.computeIfAbsent(from, Vertex::new);
+                    nodes.computeIfAbsent(to, Vertex::new);
+                    nodes.get(from).addNeighbor(nodes.get(to), cost);
+                    if (!directed) {
+                        nodes.get(to).addNeighbor(nodes.get(from), cost);
+                    }
+                } else if (line.startsWith("h(")) {
+                    String[] parts = line.substring(2, line.length() - 1).split(",");
+                    String from = parts[0].trim();
+                    int val = Integer.parseInt(parts[2].trim());
+                    nodes.computeIfAbsent(from, Vertex::new);
+                    nodes.get(from).setHeuristic(val);
+                }
+            }
+            scanner.close();
+
+            Vertex start = nodes.get(startName);
+            Vertex goal = nodes.get(goalName);
+
+            DFS dfs = new DFS();
+            dfs.traverse(start, goal);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
