@@ -19,6 +19,12 @@ public class DFS {
         }
     }
 
+    // Função: traverse
+    // Descrição: Realiza a busca em profundidade (DFS) para encontrar o caminho do vértice inicial ao objetivo, imprimindo iterações e resultados conforme especificações.
+    // Entrada: Vertex start (vértice inicial), Vertex goal (vértice objetivo).
+    // Saída: Imprime o processo de execução e o resumo final no console.
+    // Pré-Condicao: O grafo deve estar carregado corretamente com vértices e arestas; start e goal devem existir.
+    // Pós-Condicao: O caminho é encontrado e impresso se existir; caso contrário, informa que não foi encontrado.
     public void traverse(Vertex start, Vertex goal) {
         System.out.println("Início da execução");
 
@@ -95,6 +101,12 @@ public class DFS {
         }
     }
 
+    // Função: main
+    // Descrição: Ponto de entrada do programa; lê o arquivo de entrada, constrói o grafo e executa a busca DFS.
+    // Entrada: Argumentos da linha de comando (não utilizados).
+    // Saída: Executa a busca e imprime resultados no console.
+    // Pré-Condicao: O arquivo "arquivoEntrada.txt" deve existir e estar no formato correto.
+    // Pós-Condicao: O grafo é construído e a busca é realizada.
     public static void main(String[] args) {
         try {
             Scanner scanner = new Scanner(new File("arquivoEntrada.txt"));
