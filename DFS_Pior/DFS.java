@@ -29,20 +29,22 @@ public class DFS {
         System.out.println("Início da execução");
 
         Set<String> visited = new HashSet<>();
-        Deque<PathState> stack = new LinkedList<>();
+        PriorityQueue<PathState> stack = new PriorityQueue<>(Comparator.comparingInt(s -> s.g + s.vertex.getHeuristic()));
         PathState init = new PathState(start, 0, null);
-        stack.addLast(init);
+        stack.add(init);
         visited.add(start.getName());
 
-        int iteration = 0;
+        int expandedNodes = 0; // nova variável para contar nós expandidos
         boolean found = false;
         int distance = -1;
         List<String> path = null;
         int finalPerformance = 0;
 
         while (!stack.isEmpty() && !found) {
-            PathState current = stack.removeLast();
+            PathState current = stack.poll();
             Vertex v = current.vertex;
+
+            expandedNodes++; // conta nó expandido
 
             if (v.getName().equals(goal.getName())) {
                 found = true;
@@ -54,7 +56,7 @@ public class DFS {
                     temp = temp.parentState;
                 }
                 Collections.reverse(path);
-                finalPerformance = iteration;
+                finalPerformance = expandedNodes;
                 continue;
             }
 
@@ -65,18 +67,18 @@ public class DFS {
                 Vertex child = edge.to;
                 if (!visited.contains(child.getName())) {
                     visited.add(child.getName());
-                    stack.addLast(new PathState(child, current.g + edge.cost, current));
+                    stack.add(new PathState(child, current.g + edge.cost, current));
                 }
             }
 
             // Print after expand if stack not empty
             if (!stack.isEmpty()) {
-                iteration++;
-                System.out.println("Iteração " + iteration + ":");
+                System.out.println("Iteração " + expandedNodes + ":");
 
                 System.out.print("Lista: ");
+                // Para exibir a lista ordenada como está na fila de prioridade
                 List<PathState> currentList = new ArrayList<>(stack);
-                Collections.reverse(currentList); // Top to bottom
+                currentList.sort(Comparator.comparingInt(s -> s.g + s.vertex.getHeuristic()));
                 for (PathState state : currentList) {
                     int h = state.vertex.getHeuristic();
                     int soma = state.g + h;
@@ -84,9 +86,9 @@ public class DFS {
                 }
                 System.out.println();
 
-                // Chosen performance measure: number of iterations (as example, can be adjusted)
-                System.out.println("Medida de desempenho: " + iteration);
-                finalPerformance = iteration;
+                // Medida de desempenho: quantidade de nós expandidos
+                System.out.println("Medida de desempenho (nós expandidos): " + expandedNodes);
+                finalPerformance = expandedNodes;
             }
         }
 
@@ -95,7 +97,7 @@ public class DFS {
         if (found) {
             System.out.println("Distância: " + distance);
             System.out.println("Caminho: " + String.join(" – ", path));
-            System.out.println("Medida de desempenho: " + finalPerformance);
+            System.out.println("Medida de desempenho (nós expandidos): " + finalPerformance);
         } else {
             System.out.println("Caminho não encontrado.");
         }

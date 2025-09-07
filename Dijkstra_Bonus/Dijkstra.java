@@ -25,39 +25,34 @@ public class Dijkstra {
         while (!unsettledNodes.isEmpty()) {
             Node currentNode = (Node) unsettledNodes.poll();
 
-            // Calcular fio restante para o nó atual
             int fioRestante = limiteFio - currentNode.getDistance();
             boolean descartarCaminho = fioRestante <= 0;
 
-            // Exibição iterativa (printar a fila como estava antes do poll)
             System.out.println("\nIteração " + iteration + ":");
             System.out.print("Fila: ");
             unsettledNodes.add(currentNode); // Temporariamente adicionar de volta para printar a fila completa
             for (Node node : (Queue<Node>) unsettledNodes) {
-                int h = (Integer) heuristics.getOrDefault(node.getName(), 0); // Heurística (0 para Dijkstra)
+                int h = (Integer) heuristics.getOrDefault(node.getName(), 0);
                 System.out.print("(" + node.getName() + ": " + node.getDistance() + " + " + h + " = " + (node.getDistance() + h) + ") ");
             }
             System.out.println();
             unsettledNodes.remove(currentNode); // Remover após print
 
-            System.out.println("Medida de desempenho: " + nodesExpanded);
             System.out.print("Fio restante: " + fioRestante);
             if (descartarCaminho) {
                 System.out.println(" – Caminho descartado");
+                System.out.println("Medida de desempenho (nós expandidos): " + nodesExpanded);
+                iteration++;
+                continue;
             } else {
                 System.out.println();
             }
 
-            // Se o caminho deve ser descartado (fio insuficiente), não expandir este nó
-            if (descartarCaminho) {
-                iteration++;
-                continue;
-            }
+            nodesExpanded++; // Incrementa medida após expandir
 
-            nodesExpanded++; // Incrementa medida
-
-            // Se alcançou o target, pode parar (otimização opcional)
+            // Se alcançou o target, pode parar
             if (currentNode == target) {
+                System.out.println("Medida de desempenho (nós expandidos): " + nodesExpanded);
                 break;
             }
 
@@ -75,6 +70,8 @@ public class Dijkstra {
                         }
                     });
             settledNodes.add(currentNode);
+
+            System.out.println("Medida de desempenho (nós expandidos): " + nodesExpanded);
             iteration++;
         }
 
@@ -83,7 +80,7 @@ public class Dijkstra {
         System.out.println("Distância: " + target.getDistance());
         String path = target.getShortestPath().stream().map(Node::getName).collect(Collectors.joining(" – "));
         System.out.println("Caminho: " + path + " – " + target.getName());
-        System.out.println("Medida de desempenho: " + nodesExpanded);
+        System.out.println("Medida de desempenho (nós expandidos): " + nodesExpanded);
     }
 
     // Função: lerArquivo
