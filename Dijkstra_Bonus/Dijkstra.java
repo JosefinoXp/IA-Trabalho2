@@ -149,7 +149,7 @@ public class Dijkstra {
     public static void main(String[] args) {
         try {
             // Leitura do arquivo
-            Map graphData = lerArquivo("arquivoEntrada.txt");
+            Map graphData = lerArquivo("arquivoEntradaMaior.txt");
             Node source = (Node) graphData.get("initial");
             Node target = (Node) graphData.get("target");
             Map heuristics = (Map) graphData.get("heuristics");

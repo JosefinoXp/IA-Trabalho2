@@ -111,7 +111,7 @@ public class DFS {
     // Pós-Condicao: O grafo é construído e a busca é realizada.
     public static void main(String[] args) {
         try {
-            Scanner scanner = new Scanner(new File("arquivoEntrada.txt"));
+            Scanner scanner = new Scanner(new File("arquivoEntradaMaior.txt"));
             Map<String, Vertex> nodes = new HashMap<>();
             String startName = null;
             String goalName = null;
